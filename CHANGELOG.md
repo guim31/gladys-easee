@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-15
+
 ### Added
 
 - Easee chargers in Gladys, through the Easee cloud API: one device per
@@ -30,4 +32,5 @@ the notes of the version's GitHub Release.
   respects the Easee rate limit and keeps its login token in `/data`.
 - Texts and documentation in English, French, German and Spanish.
 
-[Unreleased]: https://github.com/guim31/gladys-easee/commits/main
+[Unreleased]: https://github.com/guim31/gladys-easee/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/guim31/gladys-easee/releases/tag/v1.0.1
