@@ -16,8 +16,8 @@ its only runtime dependency. It started from the official JavaScript template.
 ```bash
 npm install
 npm test                                  # node --test, the built-in runner
-node --test test/devices.test.js          # one file
-node --test --test-name-pattern "plug"    # tests whose name matches
+node --test test/app.test.js              # one file
+node --test --test-name-pattern "widget"  # tests whose name matches
 npm run lint                              # ESLint
 npm run format:check                      # Prettier, as the CI runs it
 npm run format                            # Prettier, fix in place
@@ -31,16 +31,21 @@ pushing.
 ## Architecture
 
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
-src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+index.js                          SDK wiring only: creates the client and the app, connects
+src/app.js                        the integration: account, discovery, refresh timer, commands,
+                                  scene triggers and action, widget (registered on the client)
+src/easee/client.js               Easee cloud API client: login, token refresh, typed errors
+src/easee/model.js                pure mapping of the Easee answers to Gladys values
+src/devices.js                    device builders (charger, Equalizer) and their states
+src/i18n.js                       every user-facing text, in en/fr/de/es
+src/store.js                      token file in /data
+src/issues.js                     repeated failures logged once
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
+scripts/probe.mjs                 read-only probe of the real API (fake account by default)
 gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
-test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (same sections)
+test/                             node --test, against the SDK's fake Gladys and a fake Easee
+test/helpers/fakeEasee.js         in-memory Easee cloud serving test/fixtures/easee
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,8 +75,9 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** exists in English, French, German and Spanish: action
+  messages, manifest texts, feature names, widget texts and `docs/*.md`, kept
+  in sync (`test/i18n.test.js`).
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -233,3 +239,48 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Docs `en`, `fr`, `de`, `es` avec les mêmes sections.
 - Chauffe, ouverture, sécurité : ne rien rendre pilotable « comme un thermostat » ou par un assistant
   vocal quand une erreur serait dangereuse (leçon d'OctoPrint).
+
+## Intégration Easee (ce dépôt)
+
+**API.** Cloud Easee `https://api.easee.com`, la même que l'appli, pyeasee (HACS) et evcc. Connexion
+`POST /api/accounts/login {userName, password}` (e-mail ou téléphone) → `accessToken` (~1 jour),
+`refreshToken` ; rafraîchissement `POST /api/accounts/refresh_token {accessToken, refreshToken}`.
+Lecture : `GET /api/chargers`, `GET /api/accounts/products` (sites → `equalizers`),
+`GET /api/chargers/{id}/state|config`, `GET /api/equalizers/{id}/state`. Commandes :
+`POST /api/chargers/{id}/commands/{start,resume,pause,stop}_charging`, réglages
+`POST /api/chargers/{id}/settings` (`dynamicChargerCurrent`, `enabled`).
+
+**Pièges et choix.**
+
+- **Session sans réseau vers Easee** : `api.easee.com` et `developer.easee.com` sont refusés par le
+  proxy. Les fixtures sont **reconstruites** d'après pyeasee, easee_hass (MIT) et la doc openHAB
+  (`test/fixtures/easee/README.md`) ; `scripts/probe.mjs` (lecture seule) les confronte à la vraie
+  API. evcc se lit mais ne se recopie pas : son module Easee est « NOT covered by the MIT license ».
+- **Identifiants refusés** (`400` errorCode 100, ou 401/403 sur le login) : plus aucune requête
+  jusqu'à un nouvel enregistrement de la config, pour ne pas faire bloquer le compte.
+- **Limites de débit** non publiées (pyeasee s'impose 500 requêtes / 5 min, et 10 / h sur les sites
+  détaillés). L'intégration ne lit que les appareils ajoutés, la config des bornes toutes les 10 min,
+  et sur un 429 se met en pause `Retry-After` (5 min par défaut). Ne pas appeler
+  `GET /api/sites/{id}?detailed=true` dans la boucle.
+- **`lifetimeEnergy` n'avance qu'environ une fois par heure** (constaté par evcc) et peut revenir en
+  arrière sur un relevé erratique : l'index n'est publié que s'il ne baisse pas.
+- **Énergie de session** : `electrical-vehicle-charge/last-charge-energy-added`, jamais
+  `energy-sensor/energy`, que le suivi d'énergie 5.2 lit comme un index (`ENERGY_INDEX_FEATURE_TYPES`
+  de `server/services/energy-monitoring`) : une session qui repart de zéro fausserait la consommation.
+  L'énergie totale est `energy-sensor/index`.
+- **`electrical-vehicle-charge` n'accepte pas `watt`** (seulement kilowatt) : la puissance de charge
+  passe par `energy-sensor/power` en W.
+- **États de borne** : `charging-station/connector-status` et `charging-state` (énumérations OCPP du
+  cœur, déjà dans la 5.1.4). `charging-state` n'a de sens que pendant une session ; hors session on
+  publie `IDLE` pour qu'une charge interrompue par débranchement ne reste pas « en charge ».
+- **L'éditeur de scènes n'a pas de liste pour `charging-station`** : d'où les déclencheurs dédiés
+  « véhicule branché » et « charge terminée ». Pas de transition depuis `OFFLINE` (retour en ligne).
+- **Intensité par phase** : `inCurrentT3/T4/T5` = L1/L2/L3 sur réseau TN ; sur réseau IT (Norvège)
+  le câblage diffère (documenté comme limite).
+- **Commande « démarrer »** : `start_charging` seulement en attente d'autorisation (`chargerOpMode` 7),
+  sinon `resume_charging`. Aucune commande sans véhicule (mode 1 ou hors ligne).
+- **Pas de SignalR** dans la 1.0 (`streams.easee.com/hubs/chargers`, `SubscribeWithCurrentState`,
+  messages `ProductUpdate`) : impossible à éprouver sans compte. Candidat pour une version suivante,
+  une fois le probe passé sur un vrai compte.
+- **Sécurité** : le verrouillage permanent du câble (`lock_state`) n'est pas exposé, pas plus que les
+  réglages d'installateur (`maxChargerCurrent`, circuits).

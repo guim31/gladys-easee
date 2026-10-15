@@ -1,0 +1,41 @@
+[
+  {
+    "id": 100001,
+    "siteKey": "AAAA-0000",
+    "name": "Maison",
+    "levelOfAccess": 1,
+    "address": { "street": "1 rue de l'Exemple", "zip": "00000", "area": "Exempleville" },
+    "installerAlias": null,
+    "circuits": [
+      {
+        "id": 200001,
+        "siteId": 100001,
+        "circuitPanelId": 1,
+        "panelName": "1",
+        "ratedCurrent": 32,
+        "fuse": 32,
+        "chargers": [
+          { "id": "EH000001", "name": "Garage", "productCode": 1, "levelOfAccess": 1 },
+          { "id": "EC000002", "name": "Allée", "productCode": 100, "levelOfAccess": 1 }
+        ],
+        "masterBackplate": null,
+        "useDynamicMaster": false,
+        "parentCircuitId": null
+      }
+    ],
+    "equalizers": [
+      {
+        "id": "QP000003",
+        "name": "Equalizer",
+        "siteId": 100001,
+        "circuitId": 200001,
+        "parentId": null,
+        "parentType": null,
+        "productCode": 30,
+        "levelOfAccess": 1,
+        "createdOn": "2024-02-28T14:10:02.13",
+        "updatedOn": "2025-10-30T08:11:09.44"
+      }
+    ]
+  }
+]

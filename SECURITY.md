@@ -28,8 +28,21 @@ Gladys before reporting a problem.
 
 ## Scope
 
-In scope: the code of this repository and the Docker image it publishes.
+In scope: the code of this repository and the Docker image it publishes, in
+particular:
+
+- the Easee credentials: the e-mail address (or phone number) and the
+  password live in the Gladys configuration, are only sent to
+  `https://api.easee.com/api/accounts/login`, and must never reach the logs;
+- the Easee tokens: the access and refresh tokens are kept in
+  `/data/easee-token.json` (readable by the container user only), tagged with
+  a hash of the account, never with the address itself;
+- the network: the container only talks to Gladys and to `api.easee.com` over
+  HTTPS; it opens no port;
+- the commands: the integration can start, pause and stop a charge, change
+  the dynamic current limit and enable or disable a charger. It never unlocks
+  the cable nor changes the installer settings.
 
 Out of scope: Gladys Assistant itself (see its
 [security policy](https://github.com/GladysAssistant/Gladys/security/policy)),
-and the third-party services and devices the integration talks to.
+the Easee cloud, app and chargers (report those to Easee).

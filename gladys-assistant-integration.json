@@ -1,177 +1,405 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "Easee",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "Easee EV chargers and Equalizer in Gladys: status, power, energy, charge control.",
+    "fr": "Bornes de recharge Easee et Equalizer dans Gladys : état, puissance, énergie, pilotage.",
+    "de": "Easee-Ladestationen und Equalizer in Gladys: Status, Leistung, Energie, Steuerung.",
+    "es": "Cargadores Easee y Equalizer en Gladys: estado, potencia, energía y control de carga."
   },
   "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
+  "docker_image": "ghcr.io/guim31/gladys-easee:1.0.0",
   "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "cover_image": "https://raw.githubusercontent.com/guim31/gladys-easee/main/cover.png",
+  "categories": ["energy"],
+  "transports": ["cloud"],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": {
+        "en": "Easee account",
+        "fr": "Compte Easee",
+        "de": "Easee-Konto",
+        "es": "Cuenta Easee"
+      },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "Use the account of the Easee app (e-mail address or phone number). Gladys reads your chargers and Equalizer through the Easee cloud every minute. Not affiliated with Easee.",
+        "fr": "Utilisez le compte de l'appli Easee (adresse e-mail ou numéro de téléphone). Gladys lit vos bornes et votre Equalizer via le cloud Easee chaque minute. Sans lien avec Easee.",
+        "de": "Verwende das Konto der Easee-App (E-Mail-Adresse oder Telefonnummer). Gladys liest deine Ladestationen und deinen Equalizer jede Minute über die Easee-Cloud. Nicht mit Easee verbunden.",
+        "es": "Utilice la cuenta de la aplicación Easee (correo electrónico o número de teléfono). Gladys lee sus cargadores y su Equalizer a través de la nube Easee cada minuto. Sin relación con Easee."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://easee.cloud",
+          "label": {
+            "en": "Easee Cloud portal",
+            "fr": "Portail Easee Cloud",
+            "de": "Easee-Cloud-Portal",
+            "es": "Portal Easee Cloud"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
+      "key": "username",
+      "type": "string",
+      "label": {
+        "en": "E-mail or phone number",
+        "fr": "E-mail ou téléphone",
+        "de": "E-Mail oder Telefonnummer",
+        "es": "Correo o teléfono"
       },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
-      "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
+      "description": {
+        "en": "The login of the Easee app. A phone number starts with the country code, e.g. +33.",
+        "fr": "L'identifiant de l'appli Easee. Un numéro de téléphone commence par l'indicatif, ex. +33.",
+        "de": "Die Anmeldung der Easee-App. Eine Telefonnummer beginnt mit der Ländervorwahl, z. B. +49.",
+        "es": "El usuario de la aplicación Easee. Un número de teléfono empieza por el prefijo, p. ej. +34."
+      },
+      "placeholder": {
+        "en": "e.g. name@example.com",
+        "fr": "ex. nom@example.com",
+        "de": "z. B. name@example.com",
+        "es": "p. ej. nombre@example.com"
+      },
+      "required": true
     },
     {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
-      "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
+      "key": "password",
+      "type": "secret",
+      "label": {
+        "en": "Password",
+        "fr": "Mot de passe",
+        "de": "Passwort",
+        "es": "Contraseña"
       },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
+      "required": true
     },
     {
-      "key": "unit",
+      "key": "language",
       "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
+      "label": {
+        "en": "Language of the device texts",
+        "fr": "Langue des textes des appareils",
+        "de": "Sprache der Gerätetexte",
+        "es": "Idioma de los textos"
+      },
+      "description": {
+        "en": "Names of the features (set when a device is added) and detailed status of the chargers.",
+        "fr": "Noms des fonctionnalités (fixés à l'ajout d'un appareil) et statut détaillé des bornes.",
+        "de": "Namen der Funktionen (beim Hinzufügen eines Geräts festgelegt) und detaillierter Status der Ladestationen.",
+        "es": "Nombres de las funciones (fijados al añadir un dispositivo) y estado detallado de los cargadores."
+      },
       "required": false,
-      "default": "celsius",
+      "default": "fr",
       "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
+        {
+          "value": "en",
+          "label": {
+            "en": "English",
+            "fr": "Anglais",
+            "de": "Englisch",
+            "es": "Inglés"
+          }
+        },
+        {
+          "value": "fr",
+          "label": {
+            "en": "French",
+            "fr": "Français",
+            "de": "Französisch",
+            "es": "Francés"
+          }
+        },
+        {
+          "value": "de",
+          "label": {
+            "en": "German",
+            "fr": "Allemand",
+            "de": "Deutsch",
+            "es": "Alemán"
+          }
+        },
+        {
+          "value": "es",
+          "label": {
+            "en": "Spanish",
+            "fr": "Espagnol",
+            "de": "Spanisch",
+            "es": "Español"
+          }
+        }
       ]
     },
     {
-      "key": "poll_frequency",
-      "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "key": "poll_interval",
+      "type": "select",
+      "label": {
+        "en": "Refresh interval",
+        "fr": "Intervalle de rafraîchissement",
+        "de": "Aktualisierungsintervall",
+        "es": "Intervalo de actualización"
+      },
       "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+        "en": "How often the Easee cloud is read. Easee limits the number of requests: keep one minute or more.",
+        "fr": "Fréquence de lecture du cloud Easee. Easee limite le nombre de requêtes : gardez une minute ou plus.",
+        "de": "Wie oft die Easee-Cloud gelesen wird. Easee begrenzt die Anzahl der Anfragen: Bleib bei einer Minute oder mehr.",
+        "es": "Frecuencia de lectura de la nube Easee. Easee limita el número de solicitudes: mantenga un minuto o más."
       },
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "default": "60",
+      "options": [
+        {
+          "value": "60",
+          "label": {
+            "en": "1 minute",
+            "fr": "1 minute",
+            "de": "1 Minute",
+            "es": "1 minuto"
+          }
+        },
+        {
+          "value": "120",
+          "label": {
+            "en": "2 minutes",
+            "fr": "2 minutes",
+            "de": "2 Minuten",
+            "es": "2 minutos"
+          }
+        },
+        {
+          "value": "300",
+          "label": {
+            "en": "5 minutes",
+            "fr": "5 minutes",
+            "de": "5 Minuten",
+            "es": "5 minutos"
+          }
+        }
+      ]
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
-      "timeout_seconds": 30
-    },
-    {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ]
+      "key": "test_connection",
+      "label": {
+        "en": "Test the connection",
+        "fr": "Tester la connexion",
+        "de": "Verbindung testen",
+        "es": "Probar la conexión"
+      },
+      "timeout_seconds": 60
     }
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
+      "key": "vehicle_connected",
+      "label": {
+        "en": "Vehicle plugged in",
+        "fr": "Véhicule branché",
+        "de": "Fahrzeug angesteckt",
+        "es": "Vehículo conectado"
+      },
       "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+        "en": "A vehicle was plugged into an Easee charger that had none (seen within one refresh interval).",
+        "fr": "Un véhicule a été branché sur une borne Easee qui n'en avait pas (vu en un intervalle de rafraîchissement).",
+        "de": "Ein Fahrzeug wurde an eine freie Easee-Ladestation angesteckt (innerhalb eines Aktualisierungsintervalls erkannt).",
+        "es": "Se ha conectado un vehículo a un cargador Easee que no tenía ninguno (detectado en un intervalo de actualización)."
       },
       "fields": [
         {
-          "key": "device",
+          "key": "charger",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
-        },
-        {
-          "key": "target",
-          "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
-          "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
-          ]
+          "label": {
+            "en": "Charger",
+            "fr": "Borne",
+            "de": "Ladestation",
+            "es": "Cargador"
+          }
         }
       ],
       "variables": [
         {
-          "key": "target",
+          "key": "charger_name",
           "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
+          "label": {
+            "en": "Charger name",
+            "fr": "Nom de la borne",
+            "de": "Name der Ladestation",
+            "es": "Nombre del cargador"
+          }
+        }
+      ]
+    },
+    {
+      "key": "charging_completed",
+      "label": {
+        "en": "Charging completed",
+        "fr": "Charge terminée",
+        "de": "Laden abgeschlossen",
+        "es": "Carga terminada"
+      },
+      "description": {
+        "en": "The vehicle stopped taking current by itself (full battery or its own limit), cable still plugged in.",
+        "fr": "Le véhicule a cessé de lui-même de prendre du courant (batterie pleine ou sa propre limite), câble toujours branché.",
+        "de": "Das Fahrzeug nimmt von selbst keinen Strom mehr auf (Akku voll oder eigene Grenze), das Kabel steckt noch.",
+        "es": "El vehículo ha dejado de tomar corriente por sí mismo (batería llena o su propio límite), con el cable aún conectado."
+      },
+      "fields": [
+        {
+          "key": "charger",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Charger",
+            "fr": "Borne",
+            "de": "Ladestation",
+            "es": "Cargador"
+          }
+        }
+      ],
+      "variables": [
+        {
+          "key": "charger_name",
+          "type": "string",
+          "label": {
+            "en": "Charger name",
+            "fr": "Nom de la borne",
+            "de": "Name der Ladestation",
+            "es": "Nombre del cargador"
+          }
+        },
+        {
+          "key": "session_energy",
+          "type": "number",
+          "label": {
+            "en": "Session energy (kWh)",
+            "fr": "Énergie de la session (kWh)",
+            "de": "Energie der Ladung (kWh)",
+            "es": "Energía de la sesión (kWh)"
+          }
         }
       ]
     }
   ],
   "scene_actions": [
     {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
+      "key": "charger_command",
+      "label": {
+        "en": "Control an Easee charge",
+        "fr": "Piloter une charge Easee",
+        "de": "Easee-Ladung steuern",
+        "es": "Controlar una carga Easee"
       },
-      "timeout_seconds": 15,
+      "description": {
+        "en": "Starts (or resumes), pauses or stops the charge of a vehicle plugged into an Easee charger. Stop ends the session.",
+        "fr": "Démarre (ou reprend), met en pause ou arrête la charge d'un véhicule branché sur une borne Easee. Arrêter termine la session.",
+        "de": "Startet (oder setzt fort), pausiert oder stoppt die Ladung eines an eine Easee-Ladestation angesteckten Fahrzeugs. Stoppen beendet die Sitzung.",
+        "es": "Inicia (o reanuda), pausa o detiene la carga de un vehículo conectado a un cargador Easee. Detener finaliza la sesión."
+      },
+      "timeout_seconds": 30,
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
+          "label": {
+            "en": "Charger",
+            "fr": "Borne",
+            "de": "Ladestation",
+            "es": "Cargador"
+          },
           "required": true
+        },
+        {
+          "key": "command",
+          "type": "select",
+          "label": {
+            "en": "Command",
+            "fr": "Commande",
+            "de": "Befehl",
+            "es": "Orden"
+          },
+          "required": true,
+          "default": "start",
+          "options": [
+            {
+              "value": "start",
+              "label": {
+                "en": "Start or resume",
+                "fr": "Démarrer ou reprendre",
+                "de": "Starten oder fortsetzen",
+                "es": "Iniciar o reanudar"
+              }
+            },
+            {
+              "value": "pause",
+              "label": {
+                "en": "Pause",
+                "fr": "Mettre en pause",
+                "de": "Pausieren",
+                "es": "Pausar"
+              }
+            },
+            {
+              "value": "stop",
+              "label": {
+                "en": "Stop (end the session)",
+                "fr": "Arrêter (fin de session)",
+                "de": "Stoppen (Sitzung beenden)",
+                "es": "Detener (finalizar la sesión)"
+              }
+            }
+          ]
         }
       ],
       "outputs": [
         {
-          "key": "signalled",
-          "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
+          "key": "command",
+          "type": "string",
+          "label": {
+            "en": "Easee command sent",
+            "fr": "Commande Easee envoyée",
+            "de": "Gesendeter Easee-Befehl",
+            "es": "Orden Easee enviada"
+          }
         }
       ]
     }
   ],
   "widgets": [
     {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
+      "key": "charger",
+      "label": {
+        "en": "Easee charger",
+        "fr": "Borne Easee",
+        "de": "Easee-Ladestation",
+        "es": "Cargador Easee"
       },
-      "icon": "activity",
-      "action_timeout_seconds": 15
+      "description": {
+        "en": "Status, power, session energy and current limit of a charger, with start, pause and stop.",
+        "fr": "État, puissance, énergie de la session et limite de courant, avec démarrer, pause et arrêt.",
+        "de": "Status, Leistung, Energie der Ladung und Stromgrenze, mit Start, Pause und Stopp.",
+        "es": "Estado, potencia, energía de la sesión y límite de corriente, con iniciar, pausa y detener."
+      },
+      "icon": "battery-charging",
+      "action_timeout_seconds": 30,
+      "settings": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Charger",
+            "fr": "Borne",
+            "de": "Ladestation",
+            "es": "Cargador"
+          },
+          "required": true
+        }
+      ]
     }
   ]
 }

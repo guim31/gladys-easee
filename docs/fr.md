@@ -1,67 +1,118 @@
-# Template de démonstration
+# Easee
 
-Ceci est la documentation utilisateur de l'intégration. Gladys ré-héberge ce
-fichier et affiche un lien **Documentation** permanent vers lui dans l'écran
-de configuration (dans la langue de l'utilisateur, avec l'anglais en repli) —
-c'est au moment de configurer que l'utilisateur en a le plus besoin. Gardez
-les courtes indications d'accueil dans les blocs `section` du `config_schema`
-du manifest ; mettez ici le pas-à-pas détaillé (captures d'écran, dépannage…).
+## Présentation
 
-## Ce que vous obtenez
+Cette intégration amène vos **bornes de recharge Easee** (Easee Home, Easee Charge, Charge Lite, Charge Max, Charge Up, Charge Core, Charge Pro, Easee One) et votre **Easee Equalizer** dans Gladys, par l'API cloud officielle d'Easee, celle qu'utilise l'appli Easee.
 
-Six appareils de démonstration apparaissent après l'installation : une
-station météo (vraies données Open-Meteo), un interrupteur, une lampe
-variable, une prise connectée avec mesure de puissance, un détecteur de
-mouvement et une caméra.
+- Chaque borne devient un appareil Gladys : statut du connecteur, état de la charge, puissance, intensité par phase, énergie de la session, énergie totale, limite de courant, et les commandes de charge.
+- L'Equalizer devient un appareil qui mesure le logement : import et export réseau, intensité par phase, énergie importée et exportée.
+- L'énergie totale d'une borne est un index de compteur : le suivi d'énergie de Gladys en tire une consommation toutes les 30 minutes.
+- Un widget de tableau de bord, deux déclencheurs et une action de scène complètent le tout.
+
+La recharge « intelligente » (solaire) reste dans l'appli Easee, ou dans evcc, que Gladys gère déjà : cette intégration ne la duplique pas.
+
+Cette intégration n'est pas affiliée à Easee. Elle a été développée sans le matériel : vos retours sont les bienvenus sur le [dépôt GitHub](https://github.com/guim31/gladys-easee/issues).
+
+## Prérequis
+
+- Gladys Assistant 5.1.0 ou plus récent (5.2 pour le suivi d'énergie de l'énergie totale).
+- Un compte Easee (celui de l'appli Easee) propriétaire des bornes ou y ayant accès.
+- Les bornes installées dans l'appli Easee et connectées à Internet (Wi-Fi ou 4G).
+- Gladys doit avoir accès à Internet : tout passe par le cloud Easee (`api.easee.com`).
 
 ## Configuration
 
-1. Ouvrez l'onglet **Configuration** de l'intégration.
-2. Renseignez la **latitude** et la **longitude** que la station météo de
-   démonstration doit observer (Paris par défaut), et choisissez votre unité
-   de température. L'**intervalle de rafraîchissement** règle la fréquence
-   de lecture de la station météo et de la puissance de la prise : toutes
-   les 5 minutes par défaut, toutes les minutes au plus.
-3. Enregistrez : les appareils apparaissent dans l'onglet **Découverte**,
-   prêts à être ajoutés.
+1. Dans Gladys, ouvrez **Intégrations**, installez **Easee**, puis ouvrez sa configuration.
+2. Renseignez l'**adresse e-mail ou le numéro de téléphone** et le **mot de passe** du compte Easee. Un numéro de téléphone commence par l'indicatif, ex. `+33612345678`.
+3. Choisissez la **langue des textes des appareils** : les noms des fonctionnalités (fixés à l'ajout d'un appareil) et le statut détaillé des bornes. Français par défaut.
+4. Choisissez l'**intervalle de rafraîchissement** : 1 minute (par défaut), 2 ou 5 minutes.
+5. Enregistrez, puis appuyez sur **Tester la connexion** : le message liste les bornes et les Equalizer trouvés.
+6. Ouvrez l'onglet **Découverte** et ajoutez les appareils voulus.
 
-Le réglage **Préférer la connexion locale** pilote la prise de
-démonstration : elle affiche en badge le canal réellement utilisé (local ou
-cloud), avec un point orange quand elle fonctionne en mode dégradé (local
-refusé, bascule cloud).
+Comment l'intégration dialogue avec Easee :
 
-## Actions
+- Elle se connecte une fois, puis garde le jeton d'accès et son jeton de rafraîchissement dans son volume privé `/data`. Le mot de passe reste dans la configuration de Gladys et n'apparaît jamais dans les journaux.
+- Easee limite le nombre de requêtes d'un compte (HTTP 429 au-delà). L'intégration lit l'état de chaque appareil ajouté une fois par intervalle, les réglages de chaque borne toutes les dix minutes, et rien pour les appareils que vous n'avez pas ajoutés. Sur un 429, elle s'arrête le temps demandé par Easee (5 minutes sinon).
+- Si Easee refuse les identifiants, l'intégration cesse d'essayer jusqu'à ce que vous enregistriez de nouveau la configuration : le compte n'est pas bloqué par des tentatives répétées.
 
-- **Tester le fournisseur météo** — effectue une requête en direct vers
-  Open-Meteo et affiche la température et l'humidité actuelles sous le
-  bouton.
-- **Identifier un appareil** — choisissez un de vos appareils dans la liste
-  et il se signale (la lampe de démonstration « clignote » dans les logs).
+## Appareils
 
-## Scènes
+### Borne
 
-L'intégration ajoute ses propres cartes à l'éditeur de scènes (Gladys 5.1
-ou plus récent), dans la catégorie **Intégrations** :
+| Fonctionnalité        | Type dans Gladys                     | Contenu                                                                                                  |
+| --------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| Connecteur            | Borne de recharge, connecteur        | Disponible (aucun véhicule), occupé (véhicule branché), indisponible (hors ligne), en défaut             |
+| État de la charge     | Borne de recharge, état de la charge | En charge, véhicule connecté, en pause (véhicule), en pause (borne), inactif                             |
+| Statut Easee          | Texte                                | Le statut détaillé d'Easee : en attente de démarrage, charge terminée, en attente d'autorisation...      |
+| Puissance de charge   | Puissance (W)                        | Puissance fournie au véhicule                                                                            |
+| Intensité L1, L2, L3  | Intensité (A)                        | Intensité de chaque phase                                                                                |
+| Énergie de la session | Énergie ajoutée (kWh)                | Énergie de la session en cours, ou de la dernière                                                        |
+| Énergie totale        | Index (kWh)                          | Compteur d'énergie de la borne depuis son installation (mis à jour par Easee environ une fois par heure) |
+| Limite de courant     | Intensité de consigne (A), commande  | Limite dynamique de la borne : 0 (aucun courant) ou de 6 A au maximum de la borne                        |
+| Charge autorisée      | Commutateur de charge, commande      | Allumé : démarre ou reprend la charge. Éteint : la met en pause. Il faut un véhicule branché             |
+| Borne activée         | Commutateur, commande                | Active ou désactive la borne dans ses réglages                                                           |
 
-- **Mouvement détecté** (déclencheur) — lance la scène quand un détecteur
-  de démonstration voit bouger quelque chose. Choisissez éventuellement le
-  détecteur et ce qui a bougé (personne, animal) ; laissés vides, toute
-  détection correspond. Les actions suivantes peuvent lire ce qui a bougé
-  avec `{{triggerEvent.data.target}}`.
-- **Identifier un appareil** (action) — fait se signaler l'appareil choisi.
-  Elle indique si l'appareil a pu se signaler, pour que les actions
-  suivantes puissent en dépendre.
+La borne porte aussi un badge **cloud**, qui passe à **injoignable** quand la borne est hors ligne.
 
-## Tableau de bord
+La limite de courant est la limite _dynamique_ d'Easee, faite pour changer souvent (délestage). Elle ne touche pas au courant maximal réglé par l'installateur.
 
-Ajoutez le widget **État de la démo** à un tableau de bord : il affiche en
-direct la température de la station météo et la puissance de la prise du
-bureau, la connexion utilisée par la prise (en orange si dégradée) et la
-position observée. Son bouton **Identifier la lampe** fait se signaler la
-lampe de démonstration.
+### Equalizer
+
+| Fonctionnalité       | Type dans Gladys               | Contenu                                         |
+| -------------------- | ------------------------------ | ----------------------------------------------- |
+| Import réseau        | Réseau, puissance importée (W) | Puissance prise au réseau par le logement       |
+| Export réseau        | Réseau, puissance exportée (W) | Puissance envoyée au réseau (panneaux solaires) |
+| Intensité L1, L2, L3 | Intensité (A)                  | Intensité de chaque phase du logement           |
+| Énergie importée     | Réseau, index d'import (kWh)   | Compteur d'import de l'Equalizer                |
+| Énergie exportée     | Réseau, index d'export (kWh)   | Compteur d'export de l'Equalizer                |
+
+## Widget
+
+Le widget **Borne Easee** montre une borne : puissance de charge, énergie de la session et limite de courant en tuiles en direct, le statut Easee et la connexion, et les boutons adaptés à la situation :
+
+- pendant la charge : **Pause** et **Arrêter** ;
+- véhicule branché, sans charge : **Démarrer** (ou **Reprendre**) et **Arrêter** ;
+- aucun véhicule ou borne hors ligne : aucun bouton.
+
+**Arrêter** demande une confirmation : il termine la session (avec une autorisation requise, il faut autoriser de nouveau le véhicule). Choisissez la borne dans les réglages du widget.
+
+## Déclencheurs et action de scène
+
+### Déclencheurs
+
+- **Véhicule branché** : un véhicule a été branché sur une borne qui n'en avait pas. Variable : le nom de la borne.
+- **Charge terminée** : le véhicule a cessé de lui-même de prendre du courant (batterie pleine ou sa propre limite) et reste branché. Variables : le nom de la borne, l'énergie de la session en kWh.
+
+Les deux sont détectés à chaque lecture, donc en un intervalle de rafraîchissement au plus. Une borne qui revient en ligne avec un véhicule déjà branché ne déclenche pas **Véhicule branché**. Chaque déclencheur peut être limité à une borne.
+
+### Action
+
+**Piloter une charge Easee** démarre (ou reprend), met en pause ou arrête la charge d'une borne. Sa sortie est la commande Easee envoyée (`resume_charging`, `start_charging`, `pause_charging`, `stop_charging`). L'action échoue quand aucun véhicule n'est branché.
+
+Les fonctionnalités pilotables (limite de courant, charge autorisée, borne activée) se règlent aussi par l'action standard **Contrôler un appareil** de Gladys.
+
+## Exemples de scènes
+
+- **Charge en heures creuses** : à 22 h en semaine, **Piloter une charge Easee** avec « Démarrer ou reprendre » ; à 6 h, « Mettre en pause ».
+- **Rappel** : chaque soir de semaine à 21 h, si le **Connecteur** de la borne est « disponible » (aucun véhicule), envoyer le message « La voiture n'est pas branchée ».
+- **Retour à la maison** : déclencheur **Véhicule branché** → allumer la lumière du garage 5 minutes.
+- **Fin de charge** : déclencheur **Charge terminée** → envoyer « Charge finie : `{{triggerEvent.data.session_energy}}` kWh sur `{{triggerEvent.data.charger_name}}` ».
+- **Délestage** : quand l'**Import réseau** de l'Equalizer dépasse 9000 W, régler la **Limite de courant** à 6 A ; revenu sous 6000 W, la remettre à 16 A.
 
 ## Dépannage
 
-L'intégration journalise tout ce qu'elle fait : consultez les logs de
-l'intégration depuis l'interface Gladys (ou `docker logs` sur l'hôte) avec
-`LOG_LEVEL=debug` pour le détail complet.
+- **« Easee a refusé l'adresse e-mail (ou le numéro de téléphone) et le mot de passe »** : vérifiez-les dans l'appli Easee, puis enregistrez de nouveau la configuration (l'intégration ne réessaie pas avant).
+- **« Impossible de joindre le cloud Easee »** : Gladys n'a pas accès à Internet, ou le cloud Easee est en panne. L'intégration réessaie à chaque intervalle et signale le retour.
+- **Une borne reste « indisponible »** : la borne elle-même est hors ligne pour Easee (Wi-Fi ou 4G). Vérifiez-la dans l'appli Easee.
+- **« Aucun véhicule branché »** sur une commande : démarrer, mettre en pause et arrêter demandent un véhicule branché.
+- **Trop de requêtes** : d'autres outils utilisent le même compte Easee en même temps. Choisissez un intervalle plus long.
+- **L'énergie totale ne bouge pas** : Easee la met à jour environ une fois par heure ; l'énergie de la session, elle, avance pendant la charge.
+- **Journaux détaillés** : dans les réglages du conteneur, mettez `LOG_LEVEL=debug`. Une lecture normale n'écrit rien au niveau par défaut.
+
+## Limites
+
+- Développée sans le matériel : les réponses de l'API Easee viennent des clients open source (pyeasee, Home Assistant), pas d'une vraie borne. Vos retours sont les bienvenus.
+- Cloud seulement : aucune connexion locale à la borne, rien ne marche sans Internet.
+- Pas de flux temps réel : l'état est lu toutes les 1, 2 ou 5 minutes, et une fois de plus 10 secondes après une commande.
+- L'intensité par phase lit les bornes d'un réseau TN (la plupart de l'Europe). Sur un réseau IT (Norvège), les phases peuvent être décalées.
+- Non géré : recharge intelligente et solaire, plannings de charge, autorisation par badge RFID, verrouillage du câble, mode de phase, réglages d'équilibrage de l'Equalizer. Le déverrouillage du câble n'est volontairement pas proposé.
