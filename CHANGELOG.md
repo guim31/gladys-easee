@@ -12,44 +12,22 @@ the notes of the version's GitHub Release.
 
 ### Added
 
-- A working example of scene triggers, scene actions and dashboard widgets
-  (Gladys 5.1.0 or later).
-- `CHANGELOG.md`, rolled by the Release workflow.
-- A GitHub Release for every version, with its changelog section as notes: the
-  Gladys Supervision page links each version to the repository's releases.
-- CI runs the tests on Node 22 and 24, and builds the Docker image.
-- Dependabot keeps the npm dependencies and the GitHub Actions up to date.
-- `SECURITY.md` (how to report a vulnerability) and `CLAUDE.md` (project rules
-  for contributors and coding assistants).
-- Manifest tests: `version` matches `package.json`, `docker_image` is tagged
-  with it, descriptions hold 10 to 100 characters, placeholders are
-  multi-language objects.
-- The latitude and longitude fields show an example value as placeholder.
+- Easee chargers in Gladys, through the Easee cloud API: one device per
+  charger with its connector status, charging state, detailed Easee status,
+  charging power, current per phase, session energy and total energy (a meter
+  index for the Gladys energy monitoring).
+- Charge controls: charging allowed (start or resume / pause), current limit
+  (0 or 6 A to the charger maximum) and charger enabled.
+- The Easee Equalizer as a device: grid import and export power, current per
+  phase, imported and exported energy.
+- A `cloud` / `unreachable` badge on each device, following its connection.
+- Scene triggers _Vehicle plugged in_ and _Charging completed_, and the scene
+  action _Control an Easee charge_ (start or resume, pause, stop).
+- The _Easee charger_ dashboard widget: status, power, session energy, current
+  limit and the start, pause and stop buttons.
+- A _Test the connection_ button in the configuration.
+- The integration refreshes the devices itself every 1, 2 or 5 minutes,
+  respects the Easee rate limit and keeps its login token in `/data`.
+- Texts and documentation in English, French, German and Spanish.
 
-### Changed
-
-- Node.js 22 or later is required (Node 20 is end-of-life).
-- Integration SDK 0.15.0. The tests now run against the fake Gladys of the
-  SDK, which refuses the payloads Gladys refuses.
-- The refresh interval is one minute minimum, the fastest Gladys polls a
-  device. The plug's power is only sent when it changes, and every 30
-  minutes otherwise.
-
-### Fixed
-
-- Gladys refused the devices of the Discovery tab: the weather station and
-  the plug declared their poll frequency in seconds instead of one of the
-  values Gladys accepts, and were never polled. They now poll every minute,
-  and the readings follow the refresh interval of the configuration.
-
-- The release commit no longer fails `npm run format:check`: the Release
-  workflow updates the manifest `version` and `docker_image` in place instead
-  of re-printing the whole file with `jq`.
-- The integration can write to `/data`: the image creates the directory owned
-  by the `node` user, a new Docker volume was owned by root.
-- A sub-container running the integration's own image follows it to the new
-  tag at each release, as well as in the manifest of the build summary: it kept
-  the previous tag, which may not exist on the registry. Sub-containers on a
-  third-party image (a broker, a database...) keep theirs.
-
-[Unreleased]: https://github.com/GladysAssistant/integration-template-js/commits/main
+[Unreleased]: https://github.com/guim31/gladys-easee/commits/main

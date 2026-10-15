@@ -1,0 +1,7 @@
+{
+  "accessToken": "fake-access-token-not-a-real-jwt",
+  "expiresIn": 86400,
+  "accessClaims": ["User"],
+  "tokenType": "Bearer",
+  "refreshToken": "fake-refresh-token"
+}

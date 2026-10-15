@@ -1,0 +1,24 @@
+[
+  {
+    "id": "EH000001",
+    "name": "Garage",
+    "color": 1,
+    "createdOn": "2023-04-12T09:31:07.511232",
+    "updatedOn": "2025-11-02T17:04:51.120384",
+    "backPlate": { "id": "000000000001", "masterBackPlateId": "000000000001" },
+    "levelOfAccess": 1,
+    "productCode": 1,
+    "userRole": 1
+  },
+  {
+    "id": "EC000002",
+    "name": "Allée",
+    "color": 4,
+    "createdOn": "2024-02-28T14:02:44.98101",
+    "updatedOn": "2025-10-30T08:11:09.4410",
+    "backPlate": { "id": "000000000002", "masterBackPlateId": "000000000001" },
+    "levelOfAccess": 1,
+    "productCode": 100,
+    "userRole": 1
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "errorCode": 100,
+  "errorCodeName": "InvalidUserPassword",
+  "type": null,
+  "title": "Invalid username or password",
+  "status": 400,
+  "detail": "[Empty in production]",
+  "instance": null,
+  "extensions": {}
+}
